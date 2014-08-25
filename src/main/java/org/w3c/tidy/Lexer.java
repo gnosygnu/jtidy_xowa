@@ -2311,11 +2311,11 @@ public class Lexer
                     this.lexsize = this.txtstart;
                     this.txtend = this.txtstart;
 
-                    // skip to '>'
-                    while (TidyUtils.isWhite((char) c))
-                    {
-                        c = this.in.readChar();
-                    }
+                	// skip to '>'; // XOWA:tidy; consume till ">" not first non-ws; WAS: TidyUtils.isWhite((char) c); DATE:2014-08-18 
+                	while (c != '>' && c != StreamIn.END_OF_STREAM)
+                	{
+                		c = this.in.readChar();
+                	}
 
                     if (c == StreamIn.END_OF_STREAM)
                     {
@@ -2324,12 +2324,13 @@ public class Lexer
                         continue;
                     }
 
-                    // should be at the '>' if we're not, assume one
-                    if (c != '>') {
-                        this.in.ungetChar(c);
-                        c = '>';
-                        report.attrError(this, this.token, null, Report.UNEXPECTED_GT);
-                    }
+                	// XOWA:jtidy; logic does not exist in tidy; DATE:2014-08-18
+                	// should be at the '>' if we're not, assume one
+                	// if (c != '>') {
+                	//	this.in.ungetChar(c);
+                	//	c = '>';
+                	//	report.attrError(this, this.token, null, Report.UNEXPECTED_GT);
+                	// }
 
                     this.state = LEX_CONTENT;
                     this.waswhite = false;
