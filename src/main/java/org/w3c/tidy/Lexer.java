@@ -617,15 +617,17 @@ public class Lexer
         int[] count = new int[]{0};
         byte[] buf = new byte[10]; // unsigned char
 
-        boolean err = EncodingUtils.encodeCharToUTF8Bytes(c, buf, null, count);
-        if (err)
-        {
-            // replacement char 0xFFFD encoded as UTF-8
-            buf[0] = (byte) 0xEF;
-            buf[1] = (byte) 0xBF;
-            buf[2] = (byte) 0xBD;
-            count[0] = 3;
-        }
+        // XOWA: don't fail on surrogate characters DATE:2014-08-27
+//        boolean err =
+        		EncodingUtils.encodeCharToUTF8Bytes(c, buf, null, count);
+//        if (err)
+//        {
+//            // replacement char 0xFFFD encoded as UTF-8
+//            buf[0] = (byte) 0xEF;
+//            buf[1] = (byte) 0xBF;
+//            buf[2] = (byte) 0xBD;
+//            count[0] = 3;
+//        }
 
         for (i = 0; i < count[0]; i++)
         {

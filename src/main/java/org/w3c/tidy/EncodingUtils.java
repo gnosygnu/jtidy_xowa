@@ -815,11 +815,12 @@ public final class EncodingUtils
             hasError = true;
         }
 
-        if (!hasError && (n >= UTF16_LOW_SURROGATE_BEGIN) && (n <= UTF16_HIGH_SURROGATE_END))
-        {
-            // unpaired surrogates not allowed
-            hasError = true;
-        }
+        // XOWA: don't fail on surrogate characters DATE:2014-08-27
+//        if (!hasError && (n >= UTF16_LOW_SURROGATE_BEGIN) && (n <= UTF16_HIGH_SURROGATE_END))
+//        {
+//            // unpaired surrogates not allowed
+//            hasError = true;
+//        }
 
         if (!hasError)
         {
@@ -919,7 +920,7 @@ public final class EncodingUtils
             else if ((c >= UTF16_LOW_SURROGATE_BEGIN) && (c <= UTF16_HIGH_SURROGATE_END))
             {
                 // unpaired surrogates not allowed
-                hasError = true;
+//                hasError = true;
             }
         }
         else if (c <= 0x1FFFFF) // 1111 0XXX four bytes
