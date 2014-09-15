@@ -1732,7 +1732,7 @@ public final class Report
                 // look for UTF-8 multibyte character
                 if (c < 0)
                 {
-                    i += PPrint.getUTF8(doctype.textarray, i, cc);
+                    i += PPrint.get_utf8_jtidy(doctype.textarray, i, cc);
                     c = cc[0];
                 }
 

@@ -211,6 +211,76 @@ public class PPrint
         return (this.configuration.wraplen);
         /* #431953 - end RJ */
     }
+    public int get_utf8_xowa(int[] rv, int cur_c, byte[] src, int cur_pos) {
+    	int c_len = Len_of_char_by_1st_byte(cur_c);
+    	if (c_len == 4) {										// possible surrogate
+    		int c_as_int = Decode_to_int(src, cur_pos);
+    		Surrogate_split(c_as_int, Surrogate_split_tmp);		// split char
+    		int c_0 = Surrogate_split_tmp[0];
+        	if  (	(c_0 > 55295)								// 0xD800
+    			 && (c_0 < 56320)) {							// 0xDFFF
+        		addC(c_0, linelen++);							// value is surrogate
+        		addC(Surrogate_split_tmp[1], linelen++);
+        		return 3;
+        	}
+    	}
+    	return get_utf8_jtidy(src, cur_pos, rv);
+    }
+	public static void Surrogate_split(int v, int[] ary) {
+		ary[0] = ((v - 0x10000) / 0x400 + 0xD800);
+		ary[1] = ((v - 0x10000) % 0x400 + 0xDC00);
+	}   private static int[] Surrogate_split_tmp = new int[2];
+	public static int Decode_to_int(byte[] ary, int pos) {
+		byte b0 = ary[pos];
+		if 		((b0 & 0x80) == 0) {
+			return  b0;			
+		}
+		else if ((b0 & 0xE0) == 0xC0) {
+			return  ( b0           & 0x1f) <<  6
+				| 	( ary[pos + 1] & 0x3f)
+				;			
+		}
+		else if ((b0 & 0xF0) == 0xE0) {
+			return  ( b0           & 0x0f) << 12
+				| 	((ary[pos + 1] & 0x3f) <<  6)
+				| 	( ary[pos + 2] & 0x3f)
+				;			
+		}
+		else if ((b0 & 0xF8) == 0xF0) {
+			return  ( b0           & 0x07) << 18
+				| 	((ary[pos + 1] & 0x3f) << 12)
+				| 	((ary[pos + 2] & 0x3f) <<  6)
+				| 	( ary[pos + 3] & 0x3f)
+				;			
+		}
+		else throw new RuntimeException("invalid utf8 byte: byte={0}");
+	}
+	public static int Len_of_char_by_1st_byte(int b) {// SEE:w:UTF-8
+		int i = b & 0xff;	// PATCH.JAVA:need to convert to unsigned byte
+		switch (i) {
+			case   0: case   1: case   2: case   3: case   4: case   5: case   6: case   7: case   8: case   9: case  10: case  11: case  12: case  13: case  14: case  15: 
+			case  16: case  17: case  18: case  19: case  20: case  21: case  22: case  23: case  24: case  25: case  26: case  27: case  28: case  29: case  30: case  31: 
+			case  32: case  33: case  34: case  35: case  36: case  37: case  38: case  39: case  40: case  41: case  42: case  43: case  44: case  45: case  46: case  47: 
+			case  48: case  49: case  50: case  51: case  52: case  53: case  54: case  55: case  56: case  57: case  58: case  59: case  60: case  61: case  62: case  63: 
+			case  64: case  65: case  66: case  67: case  68: case  69: case  70: case  71: case  72: case  73: case  74: case  75: case  76: case  77: case  78: case  79: 
+			case  80: case  81: case  82: case  83: case  84: case  85: case  86: case  87: case  88: case  89: case  90: case  91: case  92: case  93: case  94: case  95: 
+			case  96: case  97: case  98: case  99: case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111: 
+			case 112: case 113: case 114: case 115: case 116: case 117: case 118: case 119: case 120: case 121: case 122: case 123: case 124: case 125: case 126: case 127:
+			case 128: case 129: case 130: case 131: case 132: case 133: case 134: case 135: case 136: case 137: case 138: case 139: case 140: case 141: case 142: case 143: 
+			case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151: case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159: 
+			case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167: case 168: case 169: case 170: case 171: case 172: case 173: case 174: case 175: 
+			case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183: case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191: 
+				return 1;
+			case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199: case 200: case 201: case 202: case 203: case 204: case 205: case 206: case 207: 
+			case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215: case 216: case 217: case 218: case 219: case 220: case 221: case 222: case 223: 
+				return 2;
+			case 224: case 225: case 226: case 227: case 228: case 229: case 230: case 231: case 232: case 233: case 234: case 235: case 236: case 237: case 238: case 239: 
+				return 3;
+			case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247:
+				return 4;
+			default: throw new RuntimeException("invalid initial utf8 byte" );
+		}
+	}
 
     /**
      * return one less than the number of bytes used by the UTF-8 byte sequence. The Unicode char is returned in ch.
@@ -219,7 +289,7 @@ public class PPrint
      * @param ch initialized to 1st byte, passed as an array to allow modification
      * @return one less that the number of bytes used by UTF-8 char
      */
-    public static int getUTF8(byte[] str, int start, int[] ch)
+    public static int get_utf8_jtidy(byte[] str, int start, int[] ch)
     {
 
         int[] n = new int[1];
@@ -918,7 +988,7 @@ public class PPrint
             // look for UTF-8 multibyte character
             if (c > 0x7F)
             {
-                i += getUTF8(textarray, i, ci);
+                i += get_utf8_jtidy(textarray, i, ci);
                 c = ci[0];
             }
 
@@ -1089,11 +1159,18 @@ public class PPrint
                 }
 
                 // look for UTF-8 multibyte character
-                if (c > 0x7F)
-                {
-                    i += getUTF8(valueChars, i, ci);
-                    c = ci[0];
-                }
+            	if (c > 0x7F)
+            	{
+            		int b_offset = get_utf8_xowa(ci, c, valueChars, i);
+            		if (b_offset == 3) {	// XOWA: 4 byte surrogate pair; get_utf8 handles adding to linebuf, so just increment i and continue; DATE:2014-09-08
+            			i += 4;
+            			continue;
+            		}
+            		else {					// otherwise, just a regular 2 or 3 byte UTF8 sequence; handle as normal
+            			i += b_offset;
+            			c = ci[0];
+            		}
+            	}
 
                 ++i;
 
@@ -1502,7 +1579,7 @@ public class PPrint
             // look for UTF-8 multibyte character
             if (c > 0x7F)
             {
-                i += getUTF8(node.textarray, i, ci);
+                i += get_utf8_jtidy(node.textarray, i, ci);
                 c = ci[0];
             }
 

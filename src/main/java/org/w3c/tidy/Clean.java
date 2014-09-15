@@ -2002,7 +2002,7 @@ public class Clean
                     // look for UTF-8 multibyte character
                     if (c[0] > 0x7F)
                     {
-                        i += PPrint.getUTF8(node.textarray, i, c);
+                        i += PPrint.get_utf8_jtidy(node.textarray, i, c);
                     }
 
                     if (c[0] == 160)
@@ -2078,7 +2078,7 @@ public class Clean
             {
                 int[] c = new int[1];
 
-                PPrint.getUTF8(lexer.lexbuf, node.start, c);
+                PPrint.get_utf8_jtidy(lexer.lexbuf, node.start, c);
 
                 if (c[0] == 160)
                 {
