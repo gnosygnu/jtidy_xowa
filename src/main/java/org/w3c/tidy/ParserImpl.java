@@ -792,18 +792,18 @@ public final class ParserImpl
                         continue;
                     }
 
-                    // XOWA:jtidy
-//                    if (lexer.configuration.encloseBodyText && !iswhitenode)
-//                    {
-//                        Node para;
-//
-//                        lexer.ungetToken();
-//                        para = lexer.inferredTag("p");
-//                        body.insertNodeAtEnd(para);
-//                        parseTag(lexer, para, mode);
-//                        mode = Lexer.MIXED_CONTENT;
-//                        continue;
-//                    }
+                    // XOWA:jtidy; re-enabled; DATE:2015-11-08
+                    if (lexer.configuration.encloseBodyText && !iswhitenode)
+                    {
+                        Node para;
+
+                        lexer.ungetToken();
+                        para = lexer.inferredTag("p");
+                        body.insertNodeAtEnd(para);
+                        parseTag(lexer, para, mode);
+                        mode = Lexer.MIXED_CONTENT;
+                        continue;
+                    }
 
                     // HTML2 and HTML4 strict doesn't allow text here
                     lexer.constrainVersion(~(Dict.VERS_HTML40_STRICT | Dict.VERS_HTML20));
@@ -3484,6 +3484,8 @@ public final class ParserImpl
             lexer.report.warning(lexer, head, null, Report.MISSING_TITLE_ELEMENT);
             head.insertNodeAtEnd(lexer.inferredTag("title"));
         }
+//        if (lexer.configuration.encloseBlockText) // XOWA: tidy; DATE:2015-11-08
+//        	encloseBlockText(lexer, document);
 
         return document;
     }
@@ -3686,7 +3688,49 @@ public final class ParserImpl
 
         return document;
     }
-
+    static void encloseBlockText(Lexer lexer, Node node) {// XOWA: tidy; DATE:2015-11-08
+        TagTable tt = lexer.configuration.tt;
+    	while (node != null) {
+    		Node next = node.next;
+    		if (node.content != null)
+    			encloseBlockText(lexer, node.content);
+    		if (	!(node.tag == tt.tagForm || node.tag == tt.tagNoscript || node.tag == tt.tagBlockquote)
+    			|| 	node.content == null) {
+    			node = next;
+    			continue;
+    		}
+    		Node block = node.content;
+    		if (	(block.type == Node.TEXT_NODE && !isBlank(lexer, block))
+    			||  (block.isElement() && nodeCmIsOnlyInline(block))
+    			) {
+    			Node para = lexer.inferredTag("p");
+    			Node.insertNodeBeforeElement(block, para);
+    			while 	(	block != null
+    					&&	(!block.isElement() || nodeCmIsOnlyInline(block))
+    					) {
+    				Node tempNext = block.next;
+    				block.removeNode();
+    				para.insertNodeAtEnd(block);
+    				block = tempNext;
+    			}
+    			Node.trimSpaces(lexer, para);
+        		continue;
+    		}
+    		node = next;
+    	}
+    }
+    static boolean isBlank(Lexer lexer, Node node) {// XOWA: tidy; DATE:2015-11-08
+    	boolean isBlank = node.type == Node.TEXT_NODE;
+    	if (isBlank)
+    		isBlank = 		node.end == node.start				// Zero length
+    				|| 	(	node.end == node.start + 1			// or one blank
+    					&& 	lexer.lexbuf[node.start] == ' ')
+    				;
+    	return isBlank;
+    }
+    static boolean nodeCmIsOnlyInline(Node node) {// XOWA: tidy; DATE:2015-11-08
+    	return node.hasCm(Dict.CM_INLINE) && !node.hasCm(Dict.CM_BLOCK);
+    }
     /**
      * errors in positioning of form start or end tags generally require human intervention to fix.
      */

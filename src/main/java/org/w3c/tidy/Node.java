@@ -1550,4 +1550,8 @@ public class Node
 
         return true;
     }
+    
+    public boolean hasCm(int comp) {
+    	return (tag.model & comp) != 0;
+    }
 }
